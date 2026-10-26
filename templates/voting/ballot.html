@@ -1,0 +1,20 @@
+{% extends 'base_auth.html' %}
+{% block title %}Cast Your Vote{% endblock %}
+{% block content_column %}col-12 col-xl-10{% endblock %}
+{% block content %}
+<header class="mb-4"><p class="text-uppercase text-primary fw-semibold small mb-1">{{ polling_unit }}</p><h1 class="h2 mb-1">Cast Your Vote</h1><p class="text-muted mb-0">{{ election.title }}</p></header>
+<form method="post" action="{% url 'voting:ballot' %}">
+    {% csrf_token %}
+    {% for item in ballot_data %}
+        <section class="bg-white border rounded-2 mb-3 overflow-hidden">
+            <h2 class="h5 bg-light border-bottom px-4 py-3 mb-0">{{ item.position.name }}</h2>
+            <div class="p-3 p-md-4 row g-3">
+                {% for cand in item.candidates %}
+                    <div class="col-md-6"><input class="btn-check" type="radio" name="position_{{ item.position.id }}" id="cand_{{ cand.id }}" value="{{ cand.id }}" required><label class="btn btn-outline-secondary text-start w-100 h-100 p-3" for="cand_{{ cand.id }}"><span class="d-flex gap-3 align-items-center">{% if cand.photo %}<img src="{{ cand.photo.url }}" alt="" class="rounded-circle flex-shrink-0" style="width:56px;height:56px;object-fit:cover">{% else %}<i class="bi bi-person-circle fs-1 text-secondary"></i>{% endif %}<span><strong class="d-block">{{ cand.name }}</strong>{% if cand.party %}<small class="text-muted">{{ cand.party.name }}{% if cand.party.abbreviation %} ({{ cand.party.abbreviation }}){% endif %}</small>{% endif %}</span></span></label></div>
+                {% endfor %}
+            </div>
+        </section>
+    {% endfor %}
+    <div class="d-flex justify-content-between gap-3 mt-4"><a href="{% url 'voting:dashboard' %}" class="btn btn-outline-secondary">Back</a><button type="submit" class="btn btn-primary btn-lg">Review Selections</button></div>
+</form>
+{% endblock %}

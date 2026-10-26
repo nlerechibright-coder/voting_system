@@ -1,0 +1,47 @@
+{% extends 'base_dashboard.html' %}
+{% block title %}{{ election.title }} - Parties{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div><h2 class="fw-bold text-dark">Party Registration</h2><p class="text-muted mb-0">{{ election.title }}</p></div>
+    <a href="{% url 'elections:detail' election.pk %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-2"></i>Back</a>
+</div>
+<div class="row g-4">
+    <div class="col-md-5">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white fw-bold">Register New Party</div>
+            <div class="card-body">
+                <form method="post" action="{% url 'elections:parties' election.pk %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3"><label class="form-label fw-semibold">Party Name</label><input type="text" name="name" class="form-control" required></div>
+                    <div class="mb-3"><label class="form-label fw-semibold">Abbreviation</label><input type="text" name="abbreviation" class="form-control" placeholder="e.g., APC, PDP, LAB"></div>
+                    <div class="mb-3"><label class="form-label fw-semibold">Party Logo (Optional)</label><input type="file" name="logo" class="form-control" accept="image/*"></div>
+                    <button type="submit" class="btn btn-info w-100 text-white">Register Party</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white fw-bold">Registered Parties ({{ parties.count }})</div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="table-light"><tr><th class="ps-3">Logo</th><th>Party Name</th><th>Abbreviation</th></tr></thead>
+                        <tbody>
+                            {% for party in parties %}
+                            <tr>
+                                <td class="ps-3">{% if party.logo %}<img src="{{ party.logo.url }}" alt="{{ party.name }}" style="height: 30px;">{% else %}<span class="text-muted">-</span>{% endif %}</td>
+                                <td class="fw-semibold">{{ party.name }}</td>
+                                <td><span class="badge bg-secondary">{{ party.abbreviation }}</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center text-muted py-4">No parties registered yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

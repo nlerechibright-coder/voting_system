@@ -1,0 +1,60 @@
+{% extends 'base_dashboard.html' %}
+{% block title %}{{ election.title }} - Positions{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div><h2 class="fw-bold text-dark">Position Management</h2><p class="text-muted mb-0">{{ election.title }} ({{ election.get_election_type_display }})</p></div>
+    <a href="{% url 'elections:detail' election.pk %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-2"></i>Back</a>
+</div>
+
+{% if new_suggestions %}
+<div class="alert alert-info d-flex justify-content-between align-items-center shadow-sm mb-4">
+    <div>
+        <i class="bi bi-lightbulb-fill me-2"></i>
+        <strong>Suggested Positions for {{ election.get_election_type_display }}:</strong> 
+        {{ new_suggestions|join:", " }}
+    </div>
+    <form method="post" action="{% url 'elections:positions' election.pk %}" class="d-inline">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_suggested">
+        <button type="submit" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle me-1"></i> Add All Suggested
+        </button>
+    </form>
+</div>
+{% endif %}
+
+<div class="row g-4">
+    <div class="col-md-5">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white fw-bold">Add Custom Position</div>
+            <div class="card-body">
+                <form method="post" action="{% url 'elections:positions' election.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_custom">
+                    <div class="mb-3"><label class="form-label fw-semibold">Position Name</label><input type="text" name="name" class="form-control" required placeholder="e.g., Chief Whip"></div>
+                    <button type="submit" class="btn btn-secondary w-100">Add Position</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white fw-bold">Configured Positions ({{ positions.count }})</div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light"><tr><th class="ps-3">Position Name</th><th>Max Winners</th></tr></thead>
+                        <tbody>
+                            {% for pos in positions %}
+                            <tr><td class="ps-3 fw-semibold">{{ pos.name }}</td><td>{{ pos.max_winners }}</td></tr>
+                            {% empty %}
+                            <tr><td colspan="2" class="text-center text-muted py-4">No positions configured yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

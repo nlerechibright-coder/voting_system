@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Polling Unit Account - VoteChain{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <a href="{% url 'dashboard:home' %}" class="btn btn-outline-secondary btn-sm mb-3">
+        <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+    </a>
+    
+    <h2 class="fw-bold mb-4">Create Polling Unit Account</h2>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-person-badge me-2"></i>Account Details</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Full Name *</label>
+                                <input type="text" name="full_name" class="form-control" placeholder="e.g., John Doe" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Username *</label>
+                                <input type="text" name="username" class="form-control" placeholder="e.g., j.doe_officer" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Password *</label>
+                                <input type="password" name="password" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Role *</label>
+                                <select name="role" class="form-select" required>
+                                    <option value="accreditation_officer" selected>Accreditation Officer</option>
+                                    <option value="verification_officer">Verification Officer</option>
+                                    <option value="voter_registration_officer">Voter Registration Officer</option>
+                                    <option value="observer">Observer/Auditor</option>
+                                </select>
+                                <small class="text-muted">Accreditation Officers are typically used for voting stations.</small>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Assign to Polling Unit *</label>
+                                <select name="polling_unit_id" class="form-select" required>
+                                    <option value="" disabled selected>Select a polling unit...</option>
+                                    {% for unit in polling_units %}
+                                        <option value="{{ unit.id }}">{{ unit.name }} ({{ unit.location|default:"No location" }})</option>
+                                    {% empty %}
+                                        <option value="" disabled>No active polling units found. Please create one first.</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="bi bi-plus-circle me-2"></i>Create Account
+                            </button>
+                            <a href="{% url 'elections:polling_units' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-gear me-2"></i>Manage Polling Units
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

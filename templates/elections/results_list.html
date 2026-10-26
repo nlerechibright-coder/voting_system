@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Results - {{ election.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Official Election Results</h2>
+            <h5 class="text-muted">{{ election.title }}</h5>
+        </div>
+        <a href="{% url 'elections:list' %}" class="btn btn-outline-secondary">← Back to Elections</a>
+    </div>
+
+    <!-- Election Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="card-title text-muted text-uppercase">Registered</h6>
+                    <h2 class="display-6 fw-bold">{{ total_registered }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="card-title text-muted text-uppercase">Accredited</h6>
+                    <h2 class="display-6 fw-bold">{{ total_accredited }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="card-title text-muted text-uppercase">Voted</h6>
+                    <h2 class="display-6 fw-bold text-primary">{{ total_voted }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="card-title text-muted text-uppercase">Total Ballots</h6>
+                    <h2 class="display-6 fw-bold text-success">{{ total_votes }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Position-by-Position Results -->
+    {% for pos_result in position_results %}
+    <div class="card shadow-sm mb-4 border-0">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">{{ pos_result.position.name }}</h4>
+            <span class="badge bg-light text-dark fs-6">Total Votes: {{ pos_result.total_votes }}</span>
+        </div>
+        <div class="card-body">
+            {% if pos_result.is_tie %}
+                <div class="alert alert-warning d-flex align-items-center mb-3">
+                    <strong class="me-2">⚠️ Tie Detected!</strong>
+                    <span>Multiple candidates are tied for this position.</span>
+                </div>
+            {% endif %}
+
+            {% for item in pos_result.results %}
+            <div class="mb-3 p-3 rounded {% if item.candidate in pos_result.winners %}bg-success bg-opacity-10 border border-success{% else %}bg-light{% endif %}">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <strong class="fs-5">{{ item.candidate.name }}</strong>
+                        {% if item.candidate.party %}
+                            <span class="text-muted ms-2">({{ item.candidate.party.name }})</span>
+                        {% endif %}
+                        {% if item.candidate in pos_result.winners %}
+                            <span class="badge bg-success ms-2">🏆 Winner</span>
+                        {% endif %}
+                    </div>
+                    <div class="text-end">
+                        <span class="fs-4 fw-bold">{{ item.votes }}</span>
+                        <span class="text-muted"> votes</span>
+                    </div>
+                </div>
+                <div class="progress" style="height: 28px;">
+                    <div class="progress-bar {% if item.candidate in pos_result.winners %}bg-success{% else %}bg-primary{% endif %}" 
+                         role="progressbar" 
+                         style="width: {{ item.percentage }}%;" 
+                         aria-valuenow="{{ item.percentage }}" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100">
+                        {{ item.percentage }}%
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted text-center py-3">No approved candidates for this position.</p>
+            {% endfor %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="alert alert-info text-center">
+        <h5>No positions configured for this election.</h5>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

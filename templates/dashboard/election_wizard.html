@@ -1,0 +1,409 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Election Setup Wizard - VoteChain{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <a href="{% url 'dashboard:home' %}" class="btn btn-outline-secondary btn-sm mb-3">
+        <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+    </a>
+    
+    <h2 class="fw-bold mb-4">
+        {% if election %}
+            Setup Wizard: {{ election.title }}
+        {% else %}
+            Create New Election
+        {% endif %}
+    </h2>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Progress Tracker -->
+    {% if election %}
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="text-center flex-fill">
+                    <div class="rounded-circle bg-success text-white d-inline-flex align-items-center justify-content-center mb-2" style="width: 40px; height: 40px;">
+                        <i class="bi bi-check-lg"></i>
+                    </div>
+                    <div class="small fw-bold text-muted">Created</div>
+                </div>
+                <div class="flex-fill border-top border-2 {% if current_step >= 2 %}border-success{% else %}border-light{% endif %}"></div>
+                <div class="text-center flex-fill">
+                    <div class="rounded-circle {% if current_step >= 2 %}bg-success text-white{% else %}bg-light text-muted{% endif %} d-inline-flex align-items-center justify-content-center mb-2" style="width: 40px; height: 40px;">
+                        {% if current_step > 2 %}<i class="bi bi-check-lg"></i>{% else %}2{% endif %}
+                    </div>
+                    <div class="small fw-bold text-muted">Positions</div>
+                </div>
+                {% if election.requires_party %}
+                <div class="flex-fill border-top border-2 {% if current_step >= 3 %}border-success{% else %}border-light{% endif %}"></div>
+                <div class="text-center flex-fill">
+                    <div class="rounded-circle {% if current_step >= 3 %}bg-success text-white{% else %}bg-light text-muted{% endif %} d-inline-flex align-items-center justify-content-center mb-2" style="width: 40px; height: 40px;">
+                        {% if current_step > 3 %}<i class="bi bi-check-lg"></i>{% else %}3{% endif %}
+                    </div>
+                    <div class="small fw-bold text-muted">Parties</div>
+                </div>
+                {% endif %}
+                <div class="flex-fill border-top border-2 {% if current_step >= 4 %}border-success{% else %}border-light{% endif %}"></div>
+                <div class="text-center flex-fill">
+                    <div class="rounded-circle {% if current_step >= 4 %}bg-success text-white{% else %}bg-light text-muted{% endif %} d-inline-flex align-items-center justify-content-center mb-2" style="width: 40px; height: 40px;">
+                        {% if current_step > 4 %}<i class="bi bi-check-lg"></i>{% else %}4{% endif %}
+                    </div>
+                    <div class="small fw-bold text-muted">Candidates</div>
+                </div>
+                <div class="flex-fill border-top border-2 {% if current_step >= 5 %}border-success{% else %}border-light{% endif %}"></div>
+                <div class="text-center flex-fill">
+                    <div class="rounded-circle {% if current_step >= 5 %}bg-success text-white{% else %}bg-light text-muted{% endif %} d-inline-flex align-items-center justify-content-center mb-2" style="width: 40px; height: 40px;">
+                        {% if current_step > 5 %}<i class="bi bi-check-lg"></i>{% else %}5{% endif %}
+                    </div>
+                    <div class="small fw-bold text-muted">Voters</div>
+                </div>
+                <div class="flex-fill border-top border-2 {% if current_step >= 8 %}border-success{% else %}border-light{% endif %}"></div>
+                <div class="text-center flex-fill">
+                    <div class="rounded-circle {% if current_step >= 8 %}bg-success text-white{% else %}bg-light text-muted{% endif %} d-inline-flex align-items-center justify-content-center mb-2" style="width: 40px; height: 40px;">
+                        <i class="bi bi-check2-all"></i>
+                    </div>
+                    <div class="small fw-bold text-muted">Ready</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Step 1: Create Election -->
+    {% if not election %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-1-circle-fill me-2"></i>Create Election</h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_election">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Election Type *</label>
+                        <select name="election_type" class="form-select" required>
+                            {% for code, name in election_types %}
+                                <option value="{{ code }}">{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Year *</label>
+                        <input type="number" name="year" class="form-control" value="2026" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Context Name (e.g., "Nigeria", "IAUE")</label>
+                        <input type="text" name="context_name" class="form-control" placeholder="Optional">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Description</label>
+                        <textarea name="description" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Start Date *</label>
+                        <input type="datetime-local" name="start_date" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">End Date *</label>
+                        <input type="datetime-local" name="end_date" class="form-control" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary mt-4 px-4">
+                    <i class="bi bi-plus-circle me-2"></i>Create Election & Continue
+                </button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    
+    <!-- Step 2: Add Positions -->
+    {% if current_step == 2 %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-2-circle-fill me-2"></i>Configure Positions</h5>
+        </div>
+        <div class="card-body p-4">
+            <p class="text-muted mb-3">Enter the positions to be contested (comma-separated)</p>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_positions">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Positions *</label>
+                    <input type="text" name="position_names" class="form-control" 
+                           placeholder="e.g., President, Vice President, Secretary" 
+                           value="{{ election.get_suggested_positions|join:', ' }}" required>
+                    <small class="text-muted">Suggested: {{ election.get_suggested_positions|join:", " }}</small>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-2"></i>Add Positions & Continue
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Step 3: Add Parties -->
+    {% if current_step == 3 %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-3-circle-fill me-2"></i>Register Political Parties</h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_parties">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-5">
+                        <label class="form-label fw-bold">Party Name *</label>
+                        <input type="text" name="party_name" class="form-control" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Abbreviation</label>
+                        <input type="text" name="abbreviation" class="form-control" maxlength="10" placeholder="e.g., APC">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Logo (Optional)</label>
+                        <input type="file" name="logo" class="form-control" accept="image/*">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>Add Party
+                </button>
+            </form>
+            
+            {% if parties %}
+            <hr class="my-4">
+            <h6 class="fw-bold mb-3">Registered Parties ({{ parties.count }})</h6>
+            <div class="list-group">
+                {% for party in parties %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            {% if party.logo %}
+                                <img src="{{ party.logo.url }}" alt="{{ party.name }}" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-building"></i>
+                                </div>
+                            {% endif %}
+                            <div>
+                                <strong class="d-block">{{ party.name }}</strong>
+                                {% if party.abbreviation %}<small class="text-muted">{{ party.abbreviation }}</small>{% endif %}
+                            </div>
+                        </div>
+                        <span class="badge bg-success">Added</span>
+                    </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <a href="{% url 'dashboard:election_wizard' election.pk %}" class="btn btn-success mt-4 w-100">
+                <i class="bi bi-arrow-right-circle me-2"></i>Continue to Candidates
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Step 4: Add Candidates -->
+    {% if current_step == 4 %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-4-circle-fill me-2"></i>Register Candidates</h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_candidates">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Candidate Name *</label>
+                        <input type="text" name="candidate_name" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Position *</label>
+                        <select name="position_id" class="form-select" required>
+                            {% for pos in positions %}
+                                <option value="{{ pos.id }}">{{ pos.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% if election.requires_party %}
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Party *</label>
+                        <select name="party_id" class="form-select" required>
+                            {% for party in parties %}
+                                <option value="{{ party.id }}">{{ party.name }} ({{ party.abbreviation }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Candidate Photo (Optional)</label>
+                        <input type="file" name="photo" class="form-control" accept="image/*">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Manifesto</label>
+                        <textarea name="manifesto" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">
+                    <i class="bi bi-plus-circle me-2"></i>Add Candidate
+                </button>
+            </form>
+            
+            {% if candidates %}
+            <hr class="my-4">
+            <h6 class="fw-bold mb-3">Registered Candidates ({{ candidates.count }})</h6>
+            <div class="list-group">
+                {% for cand in candidates %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            {% if cand.photo %}
+                                <img src="{{ cand.photo.url }}" alt="{{ cand.name }}" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-person"></i>
+                                </div>
+                            {% endif %}
+                            <div>
+                                <strong class="d-block">{{ cand.name }}</strong>
+                                <small class="text-muted">{{ cand.position.name }}{% if cand.party %} • {{ cand.party.abbreviation }}{% endif %}</small>
+                            </div>
+                        </div>
+                        <span class="badge {% if cand.is_approved %}bg-success{% else %}bg-warning{% endif %}">
+                            {{ cand.is_approved|yesno:"Approved,Pending" }}
+                        </span>
+                    </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <a href="{% url 'dashboard:election_wizard' election.pk %}" class="btn btn-success mt-4 w-100">
+                <i class="bi bi-arrow-right-circle me-2"></i>Continue to Voters
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Step 5 & 6: Register & Verify Voters -->
+    {% if current_step == 5 or current_step == 6 %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-5-circle-fill me-2"></i>Register Voters</h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="register_voters">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Full Name *</label>
+                        <input type="text" name="full_name" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Username *</label>
+                        <input type="text" name="username" class="form-control" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Voter Card ID *</label>
+                        <input type="text" name="voter_card_id" class="form-control" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">
+                    <i class="bi bi-person-plus me-2"></i>Register Voter
+                </button>
+            </form>
+            
+            {% if voters %}
+            <hr class="my-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold mb-0">Registered Voters ({{ voters.count }})</h6>
+                <form method="post" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="verify_all_voters">
+                    <button type="submit" class="btn btn-sm btn-success">
+                        <i class="bi bi-check-all me-1"></i>Verify All
+                    </button>
+                </form>
+            </div>
+            <div class="list-group" style="max-height: 300px; overflow-y: auto;">
+                {% for ev in voters %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ ev.voter.user.get_full_name|default:ev.voter.user.username }}</strong>
+                            <small class="text-muted d-block">ID: {{ ev.voter_card_id }}</small>
+                        </div>
+                        <span class="badge {% if ev.is_verified %}bg-success{% else %}bg-warning{% endif %}">
+                            {{ ev.is_verified|yesno:"Verified,Pending" }}
+                        </span>
+                    </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            {% if current_step == 6 %}
+            <a href="{% url 'dashboard:election_wizard' election.pk %}" class="btn btn-success mt-4 w-100">
+                <i class="bi bi-arrow-right-circle me-2"></i>Continue to Final Step
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Step 7: Final Approvals -->
+    {% if current_step == 7 %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-6-circle-fill me-2"></i>Final Approvals</h5>
+        </div>
+        <div class="card-body p-4">
+            <p class="text-muted mb-3">Approve all candidates to make them available on the ballot.</p>
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>{{ pending_candidates_count }}</strong> candidate(s) awaiting approval.
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="approve_all_candidates">
+                <button type="submit" class="btn btn-success btn-lg w-100">
+                    <i class="bi bi-check2-all me-2"></i>Approve All Candidates & Complete Setup
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Step 8: Complete -->
+    {% if current_step == 8 %}
+    <div class="card border-success shadow-sm">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="bi bi-check-circle-fill me-2"></i>Election Ready!</h5>
+        </div>
+        <div class="card-body text-center py-5">
+            <i class="bi bi-check2-all text-success" style="font-size: 4rem;"></i>
+            <h3 class="mt-3 fw-bold">{{ election.title }}</h3>
+            <p class="text-muted">All positions, candidates, and voters are configured and ready.</p>
+            <div class="mt-4">
+                <a href="{% url 'voting:auth' %}" class="btn btn-primary btn-lg me-2">
+                    <i class="bi bi-unlock me-2"></i>Open Voting Station
+                </a>
+                <a href="{% url 'dashboard:home' %}" class="btn btn-outline-secondary btn-lg">
+                    <i class="bi bi-house me-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

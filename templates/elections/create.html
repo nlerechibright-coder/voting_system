@@ -1,0 +1,83 @@
+{% extends 'base_dashboard.html' %}
+{% block title %}Create Election{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white fw-bold">
+                <i class="bi bi-plus-circle me-2"></i>Create New Election
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'elections:create' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Election Type</label>
+                        <select name="election_type" id="election_type" class="form-select" required onchange="toggleCustomField()">
+                            <option value="">Select Type...</option>
+                            {% for value, label in available_types %}
+                                <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if not request.user.is_superuser %}
+                        <small class="text-muted">Note: Government/Political elections (Presidential, State, Local Government) can only be created by the Platform Administrator.</small>
+                        {% endif %}
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Context / Name</label>
+                            <input type="text" name="context_name" class="form-control" placeholder="e.g., Ikwerre, IAUE, CSC Dept">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Year</label>
+                            <input type="number" name="year" class="form-control" value="2026" required>
+                        </div>
+                    </div>
+                    <div class="mb-3 d-none" id="custom_identifier_group">
+                        <label class="form-label fw-semibold">Custom Voter Identifier Name</label>
+                        <input type="text" name="custom_identifier_name" class="form-control" placeholder="e.g., Membership Number, Employee ID">
+                        <small class="text-muted">This will be the label shown during voter registration.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Description</label>
+                        <textarea name="description" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Polling Unit / Voting Station</label>
+                        <select name="polling_unit" class="form-select">
+                            <option value="">Assign later</option>
+                            {% for unit in polling_units %}
+                            <option value="{{ unit.id }}">{{ unit.name }}{% if unit.location %} - {{ unit.location }}{% endif %}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Start Date & Time</label>
+                            <input type="datetime-local" name="start_date" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">End Date & Time</label>
+                            <input type="datetime-local" name="end_date" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'elections:list' %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Create Election</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+function toggleCustomField() {
+    const type = document.getElementById('election_type').value;
+    const group = document.getElementById('custom_identifier_group');
+    if (type === 'custom') {
+        group.classList.remove('d-none');
+    } else {
+        group.classList.add('d-none');
+    }
+}
+</script>
+{% endblock %}

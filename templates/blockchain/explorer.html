@@ -1,0 +1,48 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Blockchain Explorer{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold text-dark">Blockchain Explorer</h2>
+</div>
+
+<div class="alert {% if is_valid %}alert-success{% else %}alert-danger{% endif %} shadow-sm">
+    <i class="bi {% if is_valid %}bi-shield-check{% else %}bi-shield-exclamation{% endif %} me-2"></i>
+    <strong>Integrity Status:</strong> {{ integrity_message }}
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white fw-bold">Block Records</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Index</th>
+                        <th>Timestamp</th>
+                        <th>Vote Reference</th>
+                        <th>Previous Hash</th>
+                        <th class="text-truncate" style="max-width: 200px;">Current Hash</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for block in blocks %}
+                    <tr>
+                        <td class="ps-4 fw-bold">#{{ block.index }}</td>
+                        <td>{{ block.timestamp|date:"M d, Y H:i:s" }}</td>
+                        <td><code>{{ block.vote_reference }}</code></td>
+                        <td class="font-monospace small text-muted">{{ block.previous_hash|truncatechars:16 }}</td>
+                        <td class="font-monospace small text-primary">{{ block.current_hash|truncatechars:16 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">No blocks recorded yet. Cast a vote to generate the first block.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

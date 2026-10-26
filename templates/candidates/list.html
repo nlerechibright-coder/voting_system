@@ -1,0 +1,30 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Candidates{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold text-dark">All Candidates</h2>
+</div>
+
+<div class="row g-4">
+    {% for candidate in candidates %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="card-title fw-bold">{{ candidate.name }}</h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{ candidate.party }}</h6>
+                <p class="card-text small">{{ candidate.manifesto|truncatechars:100 }}</p>
+                <span class="badge bg-primary">{{ candidate.election.title }}</span>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card shadow-sm p-5 text-center">
+            <p class="text-muted">No candidates added yet.</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

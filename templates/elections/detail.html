@@ -1,0 +1,112 @@
+{% extends 'base_dashboard.html' %}
+{% block title %}{{ election.title }} - Overview{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold text-dark mb-1">{{ election.title }}</h2>
+        <p class="text-muted mb-0">{{ election.get_election_type_display }} • {{ election.start_date|date:"M d, Y" }} - {{ election.end_date|date:"M d, Y" }}</p>
+    </div>
+    <a href="{% url 'elections:list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-2"></i>Back</a>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-2"><div class="card p-3 text-center shadow-sm border-0 bg-light"><h6 class="text-muted small">Positions</h6><h3 class="fw-bold text-primary mb-0">{{ total_positions }}</h3></div></div>
+    <div class="col-md-2"><div class="card p-3 text-center shadow-sm border-0 bg-light"><h6 class="text-muted small">Parties</h6><h3 class="fw-bold text-info mb-0">{{ total_parties }}</h3></div></div>
+    <div class="col-md-2"><div class="card p-3 text-center shadow-sm border-0 bg-light"><h6 class="text-muted small">Candidates</h6><h3 class="fw-bold text-success mb-0">{{ approved_candidates }}/{{ total_candidates }}</h3></div></div>
+    <div class="col-md-3"><div class="card p-3 text-center shadow-sm border-0 bg-light"><h6 class="text-muted small">Verified Voters</h6><h3 class="fw-bold text-warning mb-0">{{ verified_voters }}/{{ total_voters }}</h3></div></div>
+    <div class="col-md-3"><div class="card p-3 text-center shadow-sm border-0 bg-light"><h6 class="text-muted small">Votes Cast</h6><h3 class="fw-bold text-danger mb-0">{{ total_votes }}</h3></div></div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100 border-0">
+            <div class="card-body text-center p-4">
+                <i class="bi bi-trophy-fill text-primary fs-1 mb-3"></i>
+                <h5 class="fw-bold">Position Management</h5>
+                <p class="text-muted small">Configure the roles/positions for this election.</p>
+                <a href="{% url 'elections:positions' election.pk %}" class="btn btn-primary w-100">Manage Positions</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100 border-0">
+            <div class="card-body text-center p-4">
+                <i class="bi bi-flag-fill text-info fs-1 mb-3"></i>
+                <h5 class="fw-bold">Party Registration</h5>
+                <p class="text-muted small">Register political parties or organizations.</p>
+                <a href="{% url 'elections:parties' election.pk %}" class="btn btn-info w-100 text-white">Manage Parties</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100 border-0">
+            <div class="card-body text-center p-4">
+                <i class="bi bi-people-fill text-success fs-1 mb-3"></i>
+                <h5 class="fw-bold">Candidate Management</h5>
+                <p class="text-muted small">Register, review, and approve candidates.</p>
+                <a href="{% url 'elections:candidates' election.pk %}" class="btn btn-success w-100">Manage Candidates</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100 border-0">
+            <div class="card-body text-center p-4">
+                <i class="bi bi-person-check-fill text-warning fs-1 mb-3"></i>
+                <h5 class="fw-bold">Voter Registry</h5>
+                <p class="text-muted small">Register and manage eligible voters.</p>
+                <a href="{% url 'elections:voters' election.pk %}" class="btn btn-warning w-100">Manage Voters</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100 border-0">
+            <div class="card-body text-center p-4">
+                <i class="bi bi-shield-check text-secondary fs-1 mb-3"></i>
+                <h5 class="fw-bold">Verification & Accreditation</h5>
+                <p class="text-muted small">Verify and accredit voters for station verification.</p>
+                <a href="{% url 'elections:verification' election.pk %}" class="btn btn-secondary w-100 text-white">Verification Queue</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100 border-0">
+            <div class="card-body text-center p-4">
+                <i class="bi bi-bar-chart-line text-danger fs-1 mb-3"></i>
+                <h5 class="fw-bold">Election Results</h5>
+                <p class="text-muted small">View real-time results per position.</p>
+                <a href="{% url 'elections:results' election.pk %}" class="btn btn-danger w-100">View Results</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100 border-0">
+            <div class="card-body text-center p-4">
+                <i class="bi bi-box-arrow-in-right text-primary fs-1 mb-3"></i>
+                <h5 class="fw-bold">Voting</h5>
+                <p class="text-muted small">Open the controlled voting station.</p>
+                <a href="{% url 'voting:auth' %}?election={{ election.pk }}" class="btn btn-primary w-100">Open Voting Station</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Danger Zone -->
+<div class="card border-danger mt-5 shadow-sm">
+    <div class="card-header bg-danger text-white fw-bold">Danger Zone</div>
+    <div class="card-body">
+        <p class="text-muted">Permanently delete this election and all associated data. This action cannot be undone. Deletion is blocked if voting has started.</p>
+        <form method="post" action="{% url 'elections:delete' election.pk %}" class="row g-3 align-items-end">
+            {% csrf_token %}
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Enter your account password to confirm:</label>
+                <input type="password" name="password" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('Are you absolutely sure? This will permanently delete the election.');">
+                    <i class="bi bi-trash me-2"></i>Delete Election
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

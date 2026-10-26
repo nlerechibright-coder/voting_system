@@ -1,0 +1,83 @@
+{% extends 'base_dashboard.html' %}
+{% block title %}{{ election.title }} - Voter Registry{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div><h2 class="fw-bold text-dark">Voter Registry <i class="bi bi-shield-lock text-danger ms-1" title="Requires Password Confirmation"></i></h2><p class="text-muted mb-0">{{ election.title }}</p></div>
+    <a href="{% url 'elections:detail' election.pk %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-2"></i>Back</a>
+</div>
+<div class="row g-4">
+    <div class="col-md-5">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white fw-bold">Register New Voter</div>
+            <div class="card-body">
+                <form method="post" action="{% url 'elections:voters' election.pk %}">
+                    {% csrf_token %}
+                    <div class="mb-3"><label class="form-label fw-semibold">Full Name</label><input type="text" name="full_name" class="form-control" required></div>
+                    <div class="row mb-3">
+                        <div class="col-6"><label class="form-label fw-semibold">Username</label><input type="text" name="username" class="form-control" required></div>
+                        <div class="col-6"><label class="form-label fw-semibold">Password</label><input type="password" name="voter_password" class="form-control"></div>
+                    </div>
+                    
+                    <div class="mb-3"><label class="form-label fw-semibold">NIN (11 Digits)</label><input type="text" name="nin" class="form-control" pattern="\d{11}" maxlength="11" title="NIN must be exactly 11 digits" required></div>
+                    <div class="mb-3"><label class="form-label fw-semibold">Voter's Card Number</label><input type="text" name="voter_card_id" class="form-control" required></div>
+                    {% if election.election_type in 'sug,faculty,departmental,association' %}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Matriculation Number</label>
+                            <input type="text" name="matric_number" class="form-control" pattern="[A-Za-z0-9/]+" title="Letters, numbers, and slashes only" placeholder="e.g., IAUE/CSC/20/1234" required>
+                        </div>
+                    {% elif election.election_type == 'custom' %}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ election.custom_identifier_name|default:"Identifier" }}</label>
+                            <input type="text" name="custom_identifier_value" class="form-control" required>
+                        </div>
+                    {% endif %}
+                    <div class="form-check mb-3"><input class="form-check-input" type="checkbox" name="biometric_registered" id="biometric_registered" checked><label class="form-check-label" for="biometric_registered">Prototype fingerprint registration completed</label></div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-danger">Your Account Password *</label>
+                        <input type="password" name="password" class="form-control" placeholder="Optional in prototype mode">
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100"><i class="bi bi-person-plus me-2"></i>Register Voter</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white fw-bold">Registered Voters ({{ voters.count }})</div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="table-light sticky-top">
+                            <tr><th class="ps-3">System ID</th><th>Name</th><th>Identity Info</th><th>Status</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for ev in voters %}
+                            <tr>
+                                <td class="ps-3"><code class="small">{{ ev.voter.voter_id }}</code></td>
+                                <td>{{ ev.voter.user.first_name|default:ev.voter.user.username }}</td>
+                                <td class="small text-muted">
+                                    {% if election.election_type in 'presidential,state,local_government' %}
+                                        {% if ev.nin %}****{{ ev.nin|slice:"-4" }}{% else %}-{% endif %}
+                                    {% elif election.election_type in 'sug,faculty,departmental,association' %}
+                                        {{ ev.matric_number|default:"-" }}
+                                    {% elif election.election_type == 'custom' %}
+                                        {{ ev.custom_identifier_value|default:"-" }}
+                                    {% else %}-{% endif %}
+                                </td>
+                                <td>
+                                    {% if ev.is_verified %}<span class="badge bg-success">Verified</span>{% else %}<span class="badge bg-warning text-dark">Pending</span>{% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center text-muted py-4">No voters registered yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,132 @@
+{% extends 'base_dashboard.html' %}
+{% block title %}{{ election.title }} - Candidates{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div><h2 class="fw-bold text-dark">Candidate Management</h2><p class="text-muted mb-0">{{ election.title }}</p></div>
+    <a href="{% url 'elections:detail' election.pk %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-2"></i>Back</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-5">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white fw-bold">Register New Candidate <i class="bi bi-shield-lock text-danger ms-1" title="Requires Password Confirmation"></i></div>
+            <div class="card-body">
+                {% if party_blocked %}
+                <div class="alert alert-warning text-center">
+                    <i class="bi bi-exclamation-triangle-fill mb-2 d-block fs-4"></i>
+                    <strong>Party Registration Required</strong>
+                    <p class="small mb-2">This election type requires party affiliation. You must register at least one party before adding candidates.</p>
+                    <a href="{% url 'elections:parties' election.pk %}" class="btn btn-warning btn-sm w-100">Register Party Now</a>
+                </div>
+                {% elif positions.count == 0 %}
+                <div class="alert alert-warning text-center">
+                    <i class="bi bi-exclamation-triangle-fill mb-2 d-block fs-4"></i>
+                    <strong>No Positions Configured</strong>
+                    <p class="small mb-2">You must configure at least one position for this election before adding candidates.</p>
+                    <a href="{% url 'elections:positions' election.pk %}" class="btn btn-warning btn-sm w-100">Configure Positions Now</a>
+                </div>
+                {% else %}
+                <form method="post" action="{% url 'elections:candidates' election.pk %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add">
+                    
+                    <div class="mb-3"><label class="form-label fw-semibold">Full Name</label><input type="text" name="name" class="form-control" required></div>
+                    
+                    {% if positions.count == 1 %}
+                        <input type="hidden" name="position" value="{{ positions.first.id }}">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Position</label>
+                            <div class="form-control bg-light fw-bold text-primary">{{ positions.first.name }}</div>
+                        </div>
+                    {% else %}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Position *</label>
+                            <select name="position" class="form-select" required>
+                                <option value="">Select Position...</option>
+                                {% for pos in positions %}<option value="{{ pos.id }}">{{ pos.name }}</option>{% endfor %}
+                            </select>
+                        </div>
+                    {% endif %}
+
+                    {% if election.requires_party %}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Party *</label>
+                        <select name="party" class="form-select" required>
+                            <option value="">Select Party...</option>
+                            {% for party in parties %}<option value="{{ party.id }}">{{ party.name }} ({{ party.abbreviation }})</option>{% endfor %}
+                        </select>
+                    </div>
+                    {% else %}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Party (Optional)</label>
+                        <select name="party" class="form-select">
+                            <option value="">Independent</option>
+                            {% for party in parties %}<option value="{{ party.id }}">{{ party.name }} ({{ party.abbreviation }})</option>{% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3"><label class="form-label fw-semibold">Candidate Photo (Optional)</label><input type="file" name="photo" class="form-control" accept="image/*"></div>
+                    <div class="mb-3"><label class="form-label fw-semibold">Manifesto</label><textarea name="manifesto" class="form-control" rows="2"></textarea></div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-danger">Your Account Password *</label>
+                        <input type="password" name="password" class="form-control" placeholder="Optional in prototype mode">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">Register Candidate</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white fw-bold">Registered Candidates ({{ candidates.count }})</div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="table-light sticky-top">
+                            <tr><th class="ps-3">Name</th><th>Position</th><th>Party</th><th>Status</th><th class="text-end pe-3">Actions</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for cand in candidates %}
+                            <tr>
+                                <td class="ps-3 fw-semibold">{{ cand.name }}</td>
+                                <td>{{ cand.position.name }}</td>
+                                <td>{% if cand.party %}{{ cand.party.abbreviation }}{% else %}<span class="text-muted">Independent</span>{% endif %}</td>
+                                <td>{% if cand.is_approved %}<span class="badge bg-success">Approved</span>{% else %}<span class="badge bg-warning text-dark">Pending</span>{% endif %}</td>
+                                <td class="text-end pe-3">
+                                    {% if not cand.is_approved %}
+                                    <form method="post" action="{% url 'elections:candidates' election.pk %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="approve">
+                                        <input type="hidden" name="candidate_id" value="{{ cand.id }}">
+                                        <button class="btn btn-sm btn-outline-success" title="Approve"><i class="bi bi-check-lg"></i></button>
+                                    </form>
+                                    <form method="post" action="{% url 'elections:candidates' election.pk %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="reject">
+                                        <input type="hidden" name="candidate_id" value="{{ cand.id }}">
+                                        <button class="btn btn-sm btn-outline-danger" title="Reject"><i class="bi bi-x-lg"></i></button>
+                                    </form>
+                                    {% else %}
+                                    <span class="text-muted small">Finalized</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center text-muted py-4">No candidates registered yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+</script>
+{% endblock %}

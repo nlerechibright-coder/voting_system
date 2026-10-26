@@ -1,0 +1,52 @@
+{% extends 'base_dashboard.html' %}
+{% block title %}My Elections - VoteChain{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold text-dark mb-1">My Elections</h2>
+        <p class="text-muted mb-0">Welcome, {{ request.user.first_name|default:request.user.username }}! Voter ID: <code>{{ voter.voter_id }}</code></p>
+    </div>
+</div>
+
+{% if eligible_elections %}
+<div class="row g-4">
+    {% for election in eligible_elections %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow-sm h-100 border-0">
+            <div class="card-body">
+                <h5 class="card-title fw-bold">{{ election.title }}</h5>
+                <p class="card-text text-muted small mb-3">
+                    <i class="bi bi-calendar me-1"></i>{{ election.start_date|date:"M d, Y" }} - {{ election.end_date|date:"M d, Y" }}
+                </p>
+                
+                {% if election.id in voted_election_ids %}
+                <div class="alert alert-secondary mb-0">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <strong>Already Voted</strong>
+                    <p class="small mb-0 mt-1">You have already cast your vote in this election.</p>
+                </div>
+                {% else %}
+                <div class="alert alert-success mb-3">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <strong>Voting Open</strong>
+                    <p class="small mb-0 mt-1">You are eligible to vote in this election.</p>
+                </div>
+                <a href="{% url 'voting:auth' %}" class="btn btn-primary w-100">
+                    <i class="bi bi-ballot me-2"></i>Cast Your Vote
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card shadow-sm border-0">
+    <div class="card-body text-center py-5">
+        <i class="bi bi-inbox fs-1 text-muted mb-3 d-block"></i>
+        <h5 class="text-muted">No Eligible Elections</h5>
+        <p class="text-muted">You are not currently registered for any active elections.</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Accreditation - {{ election.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-2">Voter Accreditation</h2>
+    <h5 class="text-muted mb-4">{{ election.title }}</h5>
+    
+    <div class="alert alert-info small mb-4" role="alert">
+        <strong>Architecture Note:</strong> This interface represents the polling-unit accreditation workflow. 
+        Identity verification is routed through the configured Verification Provider (Local Prototype / Future INEC API), 
+        followed by prototype biometric registration checks before voting-station verification.
+    </div>
+
+    <!-- Search Bar -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-8">
+                    <label for="search" class="form-label">Search by Voter ID, NIN, or Voter Card</label>
+                    <input type="text" class="form-control form-control-lg" id="search" name="search" 
+                           value="{{ search_query }}" placeholder="Enter identification number...">
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary btn-lg w-100">Search</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Voter List -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <strong>Verified Voters Ready for Accreditation</strong>
+            <span class="badge bg-primary">{{ voters|length }} voter(s)</span>
+        </div>
+        <div class="card-body p-0">
+            {% if voters %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Voter ID</th>
+                            <th>Name</th>
+                            <th>NIN / Voter Card</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ev in voters %}
+                        <tr>
+                            <td><code>{{ ev.voter.voter_id }}</code></td>
+                            <td>{{ ev.voter.user.get_full_name|default:ev.voter.user.username }}</td>
+                            <td>
+                                {% if ev.nin %}
+                                    <small class="d-block text-muted">NIN: {{ ev.nin }}</small>
+                                {% endif %}
+                                {% if ev.voter_card_id %}
+                                    <small class="d-block text-muted">PVC: {{ ev.voter_card_id }}</small>
+                                {% endif %}
+                                {% if not ev.nin and not ev.voter_card_id %}
+                                    <small class="text-muted">-</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if ev.has_voted %}
+                                    <span class="badge bg-danger">Already Voted</span>
+                                {% else %}
+                                    <span class="badge bg-success">Ready</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if not ev.has_voted %}
+                                <form method="post" class="d-inline" onsubmit="return confirm('Proceed with Identity Verification and Fingerprint Match for this voter?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="election_voter_id" value="{{ ev.pk }}">
+                                    <div class="input-group input-group-sm">
+                                        <input type="password" name="password" class="form-control" placeholder="Optional in prototype mode">
+                                        <button type="submit" class="btn btn-success">Accredit</button>
+                                    </div>
+                                </form>
+                                {% else %}
+                                <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5 text-muted">
+                <h5>No verified voters found{% if search_query %} matching "{{ search_query }}"{% endif %}.</h5>
+                <p>Ensure voters have been registered and verified before accreditation.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% load static %}
+<nav id="sidebar" class="bg-dark text-white shadow" style="width: 260px; min-height: 100vh; position: fixed; top: 0; left: 0; z-index: 1000; overflow-y: auto;">
+    <div class="sidebar-header p-3 text-center border-bottom border-secondary">
+        <h4 class="fw-bold mb-0 text-white"><i class="bi bi-shield-lock-fill me-2"></i>VoteChain</h4>
+        <small class="text-muted">Secure E-Voting System</small>
+    </div>
+
+    <ul class="list-unstyled components p-3">
+        <li class="mb-2">
+            <a href="{% url 'dashboard:home' %}" class="text-white text-decoration-none d-block py-2 px-3 rounded {% if request.resolver_match.url_name == 'home' %}bg-primary{% endif %}">
+                <i class="bi bi-speedometer2 me-2"></i> Dashboard
+            </a>
+        </li>
+
+        <li class="mb-2">
+            <a href="#electionsSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="text-white text-decoration-none d-block py-2 px-3 rounded dropdown-toggle">
+                <i class="bi bi-ballot me-2"></i> Elections
+            </a>
+            <ul class="collapse list-unstyled ps-3" id="electionsSubmenu">
+                <li><a href="{% url 'elections:list' %}" class="text-white-50 text-decoration-none d-block py-1 px-2 small">Manage Elections</a></li>
+                <li><a href="{% url 'elections:create' %}" class="text-white-50 text-decoration-none d-block py-1 px-2 small">Create Election</a></li>
+                <li><a href="{% url 'elections:polling_units' %}" class="text-white-50 text-decoration-none d-block py-1 px-2 small">Polling Units</a></li>
+                <li><a href="{% url 'elections:results_list' %}" class="text-white-50 text-decoration-none d-block py-1 px-2 small">Results</a></li>
+            </ul>
+        </li>
+
+        <li class="mb-2">
+            <a href="#votersSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="text-white text-decoration-none d-block py-2 px-3 rounded dropdown-toggle">
+                <i class="bi bi-people-fill me-2"></i> Voters
+            </a>
+            <ul class="collapse list-unstyled ps-3" id="votersSubmenu">
+                <li><a href="{% url 'voters:list' %}" class="text-white-50 text-decoration-none d-block py-1 px-2 small">Registered Voters</a></li>
+                <li><a href="{% url 'elections:list' %}" class="text-white-50 text-decoration-none d-block py-1 px-2 small">Accreditation</a></li>
+            </ul>
+        </li>
+
+        <li class="mb-2">
+            <a href="{% url 'voting:auth' %}" class="text-white text-decoration-none d-block py-2 px-3 rounded">
+                <i class="bi bi-box-arrow-in-right me-2"></i> Voting Station
+            </a>
+        </li>
+
+        <li class="mb-2">
+            <a href="#securitySubmenu" data-bs-toggle="collapse" aria-expanded="false" class="text-white text-decoration-none d-block py-2 px-3 rounded dropdown-toggle">
+                <i class="bi bi-shield-check me-2"></i> Security
+            </a>
+            <ul class="collapse list-unstyled ps-3" id="securitySubmenu">
+                <li><a href="{% url 'blockchain:explorer' %}" class="text-white-50 text-decoration-none d-block py-1 px-2 small">Blockchain Explorer</a></li>
+                <li><a href="{% url 'elections:audit' %}" class="text-white-50 text-decoration-none d-block py-1 px-2 small">Audit Logs</a></li>
+            </ul>
+        </li>
+
+        {% if request.user.is_superuser %}
+        <li class="mb-2">
+            <a href="#adminSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="text-white text-decoration-none d-block py-2 px-3 rounded dropdown-toggle">
+                <i class="bi bi-gear-fill me-2"></i> Administration
+            </a>
+            <ul class="collapse list-unstyled ps-3" id="adminSubmenu">
+                <li><a href="{% url 'elections:staff' %}" class="text-white-50 text-decoration-none d-block py-1 px-2 small">Staff Management</a></li>
+            </ul>
+        </li>
+        {% endif %}
+    </ul>
+</nav>

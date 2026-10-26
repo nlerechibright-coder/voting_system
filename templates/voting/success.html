@@ -1,0 +1,5 @@
+{% extends 'base_auth.html' %}
+{% block title %}Vote Recorded{% endblock %}
+{% block content %}
+<section class="auth-card p-5 text-center"><i class="bi bi-check-circle-fill text-success" style="font-size:4rem"></i><h1 class="h3 mt-3">Vote Recorded</h1><p class="text-muted">Your ballot has been recorded and its integrity record has been added to the blockchain.</p><a href="{% url 'voting:auth' %}" class="btn btn-primary mt-3">Finish Session</a></section>
+{% endblock %}

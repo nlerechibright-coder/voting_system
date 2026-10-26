@@ -1,0 +1,19 @@
+{% extends 'base_auth.html' %}
+{% block title %}Voting Station{% endblock %}
+{% block content %}
+<section class="auth-card p-4 p-md-5">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <i class="bi bi-person-check-fill text-success fs-2"></i>
+        <div>
+            <p class="text-uppercase text-muted small mb-1">Welcome</p>
+            <h1 class="h3 mb-0">{{ election_voter.voter.user.first_name|default:election_voter.voter.user.username }}</h1>
+        </div>
+    </div>
+    <dl class="row border-top border-bottom py-3 mb-4">
+        <dt class="col-sm-4 text-muted fw-normal">Election</dt><dd class="col-sm-8 fw-semibold">{{ election_voter.election.title }}</dd>
+        <dt class="col-sm-4 text-muted fw-normal">Polling Unit</dt><dd class="col-sm-8">{{ election_voter.polling_unit|default:election_voter.election.polling_unit|default:"Assigned voting station" }}</dd>
+        <dt class="col-sm-4 text-muted fw-normal">Voting Status</dt><dd class="col-sm-8"><span class="badge text-bg-success">Eligible to vote</span></dd>
+    </dl>
+    <a href="{% url 'voting:ballot' %}" class="btn btn-primary btn-lg w-100">Cast Your Vote</a>
+</section>
+{% endblock %}
