@@ -13,10 +13,13 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-#g@h(kn8i1p0l-
 # SECURITY: Automatically turn off DEBUG when deployed on Render
 DEBUG = 'RENDER' not in os.environ
 
-# SECURITY: Allow Render domains and local hosts
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
-if 'RENDER' in os.environ:
-    ALLOWED_HOSTS.append('.onrender.com')
+# SECURITY: Explicitly allow your Render domain and localhost
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'localhost',
+    'voting-system-mh0m.onrender.com',
+    '.onrender.com'
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -37,7 +40,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # Serves static files in production
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -70,6 +73,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 if 'RENDER' in os.environ:
     DATABASES = {
         'default': dj_database_url.config(
+            env='DATABASE_URL',
             conn_max_age=600,
             ssl_require=True
         )
@@ -98,7 +102,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Django 6.1 Modern Static Files Storage Configuration
+# Django 4.2+ Modern Static Files Storage Configuration
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
@@ -119,5 +123,5 @@ LOGIN_REDIRECT_URL = 'dashboard:home'
 LOGIN_URL = 'authentication:login'
 LOGOUT_REDIRECT_URL = 'authentication:login'
 
-# Prototype Mode (Set to False in production if you want strict biometric enforcement)
-PROTOTYPE_MODE = True 
+# Prototype Mode
+PROTOTYPE_MODE = True
