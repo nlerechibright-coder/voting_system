@@ -68,13 +68,24 @@ class ElectionSetupWizardView(LoginRequiredMixin, TemplateView):
 
     def post(self, request, pk=None):
         action = request.POST.get('action')
-        if action == 'create_election': return self._create_election(request)
-        elif action == 'add_positions': return self._add_positions(request, pk)
-        elif action == 'add_parties': return self._add_parties(request, pk)
-        elif action == 'add_candidates': return self._add_candidates(request, pk)
-        elif action == 'register_voters': return self._register_voters(request, pk)
-        elif action == 'verify_all_voters': return self._verify_all_voters(request, pk)
-        elif action == 'approve_all_candidates': return self._approve_all_candidates(request, pk)
+        
+        if action == 'create_election':
+            return self._create_election(request)
+        elif action == 'add_positions':
+            return self._add_positions(request, pk)
+        elif action == 'add_parties':
+            return self._add_parties(request, pk)
+        elif action == 'finish_parties':
+            return self._finish_parties(request, pk)
+        elif action == 'add_candidates':
+            return self._add_candidates(request, pk)
+        elif action == 'register_voters':
+            return self._register_voters(request, pk)
+        elif action == 'verify_all_voters':
+            return self._verify_all_voters(request, pk)
+        elif action == 'approve_all_candidates':
+            return self._approve_all_candidates(request, pk)
+        
         return redirect('dashboard:election_wizard', pk=pk)
 
     def _create_election(self, request):
@@ -131,6 +142,12 @@ class ElectionSetupWizardView(LoginRequiredMixin, TemplateView):
             messages.success(request, f'Party "{party_name}" added.')
         return redirect('dashboard:election_wizard', pk=pk)
 
+    def _finish_parties(self, request, pk):
+        # Mark the party step as complete so the wizard advances to candidates
+        request.session[f'wizard_{pk}_parties_done'] = True
+        messages.success(request, 'Party setup complete. Now add your candidates.')
+        return redirect('dashboard:election_wizard', pk=pk)
+
     def _add_candidates(self, request, pk):
         election = get_object_or_404(Election, pk=pk)
         name = request.POST.get('candidate_name')
@@ -178,13 +195,25 @@ class ElectionSetupWizardView(LoginRequiredMixin, TemplateView):
         return redirect('dashboard:election_wizard', pk=pk)
 
     def _get_current_step(self, election):
-        if not election.positions.exists(): return 2
-        elif election.requires_party and not election.parties.exists(): return 3
-        elif not election.candidates.exists(): return 4
-        elif not election.registered_voters.exists(): return 5
-        elif election.registered_voters.filter(is_verified=False).exists(): return 6
-        elif election.candidates.filter(is_approved=False).exists(): return 7
-        else: return 8
+        if not election.positions.exists(): 
+            return 2
+        
+        # Check if user explicitly finished the parties step
+        parties_done = self.request.session.get(f'wizard_{election.pk}_parties_done', False)
+        
+        if election.requires_party and not parties_done: 
+            return 3
+            
+        if not election.candidates.exists(): 
+            return 4
+        elif not election.registered_voters.exists(): 
+            return 5
+        elif election.registered_voters.filter(is_verified=False).exists(): 
+            return 6
+        elif election.candidates.filter(is_approved=False).exists(): 
+            return 7
+        else: 
+            return 8
 
 
 class PollingUnitAccountCreateView(LoginRequiredMixin, View):
@@ -210,14 +239,13 @@ class PollingUnitAccountCreateView(LoginRequiredMixin, View):
             user = User.objects.create_user(username=username, password=password, first_name=full_name, is_staff=True)
             StaffProfile.objects.create(user=user, role=role, polling_unit=polling_unit, is_active=True)
             messages.success(request, f'Account for "{full_name}" created and assigned to {polling_unit.name}.')
-            return redirect('dashboard:staff_management') # Redirect to management to see the new user
+            return redirect('dashboard:staff_management')
         except Exception as e:
             messages.error(request, f'Error: {str(e)}')
             return redirect('dashboard:polling_unit_account_create')
 
 
 class StaffManagementView(LoginRequiredMixin, View):
-    """View for admins to manage and revoke staff access"""
     template_name = 'dashboard/staff_management.html'
 
     def dispatch(self, request, *args, **kwargs):

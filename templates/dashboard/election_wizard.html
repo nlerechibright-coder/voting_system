@@ -153,7 +153,7 @@
     </div>
     {% endif %}
 
-    <!-- Step 3: Add Parties -->
+    <!-- Step 3: Add Parties (Fixed to allow multiple additions) -->
     {% if current_step == 3 %}
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-primary text-white">
@@ -207,9 +207,13 @@
             </div>
             {% endif %}
             
-            <a href="{% url 'dashboard:election_wizard' election.pk %}" class="btn btn-success mt-4 w-100">
-                <i class="bi bi-arrow-right-circle me-2"></i>Continue to Candidates
-            </a>
+            <form method="post" class="mt-4">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="finish_parties">
+                <button type="submit" class="btn btn-success w-100">
+                    <i class="bi bi-arrow-right-circle me-2"></i>Continue to Candidates
+                </button>
+            </form>
         </div>
     </div>
     {% endif %}
@@ -288,9 +292,13 @@
             </div>
             {% endif %}
             
-            <a href="{% url 'dashboard:election_wizard' election.pk %}" class="btn btn-success mt-4 w-100">
-                <i class="bi bi-arrow-right-circle me-2"></i>Continue to Voters
-            </a>
+            <form method="post" class="mt-4">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="finish_candidates">
+                <button type="submit" class="btn btn-success w-100">
+                    <i class="bi bi-arrow-right-circle me-2"></i>Continue to Voters
+                </button>
+            </form>
         </div>
     </div>
     {% endif %}
@@ -352,9 +360,13 @@
             {% endif %}
             
             {% if current_step == 6 %}
-            <a href="{% url 'dashboard:election_wizard' election.pk %}" class="btn btn-success mt-4 w-100">
-                <i class="bi bi-arrow-right-circle me-2"></i>Continue to Final Step
-            </a>
+            <form method="post" class="mt-4">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="finish_voters">
+                <button type="submit" class="btn btn-success w-100">
+                    <i class="bi bi-arrow-right-circle me-2"></i>Continue to Final Step
+                </button>
+            </form>
             {% endif %}
         </div>
     </div>
