@@ -10,8 +10,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY: Load SECRET_KEY from environment variable
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-#g@h(kn8i1p0l-dws(-o+m58n+5py(th*43(wd$)vhnd!9*nn-')
 
-# SECURITY: Automatically turn off DEBUG when deployed on Render
-DEBUG = 'RENDER' not in os.environ
+# TEMPORARY: Turned on to diagnose the 500 error on Render
+# We will change this back to False once the issue is fixed!
+DEBUG = True
 
 # SECURITY: Explicitly allow your Render domain and localhost
 ALLOWED_HOSTS = [
