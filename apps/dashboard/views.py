@@ -79,10 +79,14 @@ class ElectionSetupWizardView(LoginRequiredMixin, TemplateView):
             return self._finish_parties(request, pk)
         elif action == 'add_candidates':
             return self._add_candidates(request, pk)
+        elif action == 'finish_candidates':
+            return self._finish_candidates(request, pk)
         elif action == 'register_voters':
             return self._register_voters(request, pk)
         elif action == 'verify_all_voters':
             return self._verify_all_voters(request, pk)
+        elif action == 'finish_voters':
+            return self._finish_voters(request, pk)
         elif action == 'approve_all_candidates':
             return self._approve_all_candidates(request, pk)
         
@@ -143,7 +147,6 @@ class ElectionSetupWizardView(LoginRequiredMixin, TemplateView):
         return redirect('dashboard:election_wizard', pk=pk)
 
     def _finish_parties(self, request, pk):
-        # Mark the party step as complete so the wizard advances to candidates
         request.session[f'wizard_{pk}_parties_done'] = True
         messages.success(request, 'Party setup complete. Now add your candidates.')
         return redirect('dashboard:election_wizard', pk=pk)
@@ -162,22 +165,35 @@ class ElectionSetupWizardView(LoginRequiredMixin, TemplateView):
             messages.success(request, f'Candidate "{name}" added.')
         return redirect('dashboard:election_wizard', pk=pk)
 
+    def _finish_candidates(self, request, pk):
+        request.session[f'wizard_{pk}_candidates_done'] = True
+        messages.success(request, 'Candidate setup complete. Now register your voters.')
+        return redirect('dashboard:election_wizard', pk=pk)
+
     def _register_voters(self, request, pk):
         election = get_object_or_404(Election, pk=pk)
-        full_name, username, voter_card_id = request.POST.get('full_name'), request.POST.get('username'), request.POST.get('voter_card_id')
+        full_name = request.POST.get('full_name')
+        username = request.POST.get('username')
+        voter_card_id = request.POST.get('voter_card_id')
         
         if not all([full_name, username, voter_card_id]):
             messages.error(request, 'All fields are required.')
             return redirect('dashboard:election_wizard', pk=pk)
-        if User.objects.filter(username=username).exists() or ElectionVoter.objects.filter(election=election, voter_card_id=voter_card_id).exists():
-            messages.error(request, 'Username or Voter Card ID already exists.')
+        
+        # SPECIFIC ERROR CHECKS:
+        if User.objects.filter(username=username).exists():
+            messages.error(request, f'The username "{username}" is already taken. Please choose a unique username.')
+            return redirect('dashboard:election_wizard', pk=pk)
+            
+        if ElectionVoter.objects.filter(election=election, voter_card_id=voter_card_id).exists():
+            messages.error(request, f'The Voter Card ID "{voter_card_id}" is already registered for this election.')
             return redirect('dashboard:election_wizard', pk=pk)
         
         try:
             user = User.objects.create_user(username=username, first_name=full_name)
             voter = Voter.objects.create(user=user, is_verified=True)
             ElectionVoter.objects.create(election=election, voter=voter, voter_card_id=voter_card_id, is_verified=True, has_voted=False)
-            messages.success(request, f'Voter "{full_name}" registered.')
+            messages.success(request, f'Voter "{full_name}" registered successfully.')
         except Exception as e:
             messages.error(request, f'Error: {str(e)}')
         return redirect('dashboard:election_wizard', pk=pk)
@@ -186,6 +202,11 @@ class ElectionSetupWizardView(LoginRequiredMixin, TemplateView):
         election = get_object_or_404(Election, pk=pk)
         count = election.registered_voters.filter(is_verified=False).update(is_verified=True)
         messages.success(request, f'{count} voter(s) verified.')
+        return redirect('dashboard:election_wizard', pk=pk)
+
+    def _finish_voters(self, request, pk):
+        request.session[f'wizard_{pk}_voters_done'] = True
+        messages.success(request, 'Voter registration complete. Proceeding to final approvals.')
         return redirect('dashboard:election_wizard', pk=pk)
 
     def _approve_all_candidates(self, request, pk):
@@ -198,22 +219,28 @@ class ElectionSetupWizardView(LoginRequiredMixin, TemplateView):
         if not election.positions.exists(): 
             return 2
         
-        # Check if user explicitly finished the parties step
         parties_done = self.request.session.get(f'wizard_{election.pk}_parties_done', False)
-        
         if election.requires_party and not parties_done: 
             return 3
             
         if not election.candidates.exists(): 
             return 4
-        elif not election.registered_voters.exists(): 
+            
+        candidates_done = self.request.session.get(f'wizard_{election.pk}_candidates_done', False)
+        if not candidates_done:
+            return 4
+            
+        if not election.registered_voters.exists(): 
             return 5
-        elif election.registered_voters.filter(is_verified=False).exists(): 
+            
+        voters_done = self.request.session.get(f'wizard_{election.pk}_voters_done', False)
+        if not voters_done and election.registered_voters.filter(is_verified=False).exists():
             return 6
-        elif election.candidates.filter(is_approved=False).exists(): 
+            
+        if election.candidates.filter(is_approved=False).exists(): 
             return 7
-        else: 
-            return 8
+            
+        return 8
 
 
 class PollingUnitAccountCreateView(LoginRequiredMixin, View):
