@@ -18,7 +18,6 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         if not request.user.is_authenticated:
             return redirect('authentication:login')
         
-        # RBAC: Block polling unit staff from accessing the main dashboard
         if hasattr(request.user, 'staff_profile') and request.user.staff_profile.polling_unit:
             if request.user.staff_profile.role != 'election_admin' and not request.user.is_superuser:
                 messages.warning(request, 'Access restricted. Redirecting to your voting station.')
@@ -77,6 +76,8 @@ class ElectionSetupWizardView(LoginRequiredMixin, TemplateView):
             return self._add_parties(request, pk)
         elif action == 'finish_parties':
             return self._finish_parties(request, pk)
+        elif action == 'back_to_parties':
+            return self._back_to_parties(request, pk)
         elif action == 'add_candidates':
             return self._add_candidates(request, pk)
         elif action == 'finish_candidates':
@@ -143,12 +144,20 @@ class ElectionSetupWizardView(LoginRequiredMixin, TemplateView):
                 abbreviation=request.POST.get('abbreviation', ''), 
                 logo=request.FILES.get('logo')
             )
-            messages.success(request, f'Party "{party_name}" added.')
+            messages.success(request, f'Party "{party_name}" added to this election.')
+        else:
+            messages.error(request, 'Party name is required.')
         return redirect('dashboard:election_wizard', pk=pk)
 
     def _finish_parties(self, request, pk):
         request.session[f'wizard_{pk}_parties_done'] = True
         messages.success(request, 'Party setup complete. Now add your candidates.')
+        return redirect('dashboard:election_wizard', pk=pk)
+
+    def _back_to_parties(self, request, pk):
+        # Clear the flag so the wizard returns to Step 3
+        request.session.pop(f'wizard_{pk}_parties_done', None)
+        messages.info(request, 'Add your political parties for this election, then continue.')
         return redirect('dashboard:election_wizard', pk=pk)
 
     def _add_candidates(self, request, pk):
@@ -163,6 +172,8 @@ class ElectionSetupWizardView(LoginRequiredMixin, TemplateView):
                 manifesto=request.POST.get('manifesto', ''), photo=request.FILES.get('photo')
             )
             messages.success(request, f'Candidate "{name}" added.')
+        else:
+            messages.error(request, 'Candidate name and position are required.')
         return redirect('dashboard:election_wizard', pk=pk)
 
     def _finish_candidates(self, request, pk):
@@ -180,7 +191,6 @@ class ElectionSetupWizardView(LoginRequiredMixin, TemplateView):
             messages.error(request, 'All fields are required.')
             return redirect('dashboard:election_wizard', pk=pk)
         
-        # SPECIFIC ERROR CHECKS:
         if User.objects.filter(username=username).exists():
             messages.error(request, f'The username "{username}" is already taken. Please choose a unique username.')
             return redirect('dashboard:election_wizard', pk=pk)

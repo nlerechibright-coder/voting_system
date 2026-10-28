@@ -153,13 +153,17 @@
     </div>
     {% endif %}
 
-    <!-- Step 3: Add Parties (Fixed to allow multiple additions) -->
+    <!-- Step 3: Add Parties -->
     {% if current_step == 3 %}
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-primary text-white">
             <h5 class="mb-0"><i class="bi bi-3-circle-fill me-2"></i>Register Political Parties</h5>
         </div>
         <div class="card-body p-4">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                Parties belong to <strong>this election only</strong>. Add every party that will contest in {{ election.title }}.
+            </div>
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="add_parties">
@@ -184,7 +188,7 @@
             
             {% if parties %}
             <hr class="my-4">
-            <h6 class="fw-bold mb-3">Registered Parties ({{ parties.count }})</h6>
+            <h6 class="fw-bold mb-3">Parties in this Election ({{ parties.count }})</h6>
             <div class="list-group">
                 {% for party in parties %}
                     <div class="list-group-item d-flex justify-content-between align-items-center">
@@ -225,6 +229,32 @@
             <h5 class="mb-0"><i class="bi bi-4-circle-fill me-2"></i>Register Candidates</h5>
         </div>
         <div class="card-body p-4">
+
+            {% if not parties %}
+            <div class="alert alert-warning d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+                <span>
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>No political parties registered for this election yet.</strong>
+                    Parties are created per election, so you must add them here before assigning candidates.
+                </span>
+                <form method="post" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="back_to_parties">
+                    <button type="submit" class="btn btn-warning btn-sm">
+                        <i class="bi bi-arrow-left-circle me-1"></i> Go to Party Setup
+                    </button>
+                </form>
+            </div>
+            {% else %}
+            <div class="alert alert-light border mb-4">
+                <small class="text-muted">
+                    <i class="bi bi-building me-1"></i>
+                    Parties in this election:
+                    {% for p in parties %}<strong>{{ p.name }}</strong>{% if not forloop.last %}, {% endif %}{% endfor %}
+                </small>
+            </div>
+            {% endif %}
+
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="add_candidates">
@@ -241,16 +271,19 @@
                             {% endfor %}
                         </select>
                     </div>
-                    {% if election.requires_party %}
+                    
+                    {% if parties %}
                     <div class="col-md-6">
-                        <label class="form-label fw-bold">Party *</label>
-                        <select name="party_id" class="form-select" required>
+                        <label class="form-label fw-bold">Party {% if election.requires_party %}*{% endif %}</label>
+                        <select name="party_id" class="form-select" {% if election.requires_party %}required{% endif %}>
+                            <option value="">-- Independent / No Party --</option>
                             {% for party in parties %}
-                                <option value="{{ party.id }}">{{ party.name }} ({{ party.abbreviation }})</option>
+                                <option value="{{ party.id }}">{{ party.name }}{% if party.abbreviation %} ({{ party.abbreviation }}){% endif %}</option>
                             {% endfor %}
                         </select>
                     </div>
                     {% endif %}
+
                     <div class="col-md-6">
                         <label class="form-label fw-bold">Candidate Photo (Optional)</label>
                         <input type="file" name="photo" class="form-control" accept="image/*">
